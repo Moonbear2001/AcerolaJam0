@@ -11,6 +11,11 @@ class Champion(GameObject):
     Abstract champion class. 
     """
 
+    Q_CD = 5 * FPS
+    W_CD = 5 * FPS
+    E_CD = 5 * FPS
+    D_CD = 5 * FPS
+
     def __init__(self, color, width, height):
         """
         """
@@ -23,20 +28,25 @@ class Champion(GameObject):
         self.linger_time = 10
         
         self.input = {"a": False, "s": False, "d": False, "q": False, "w": False, "e": False}
+        self.cds = {"d": 0.0, "q": 0.0, "w": 0.0, "e": 0.0}
         self.target = (WIDTH // 2, HEIGHT // 2)
 
         # TODO: VARIABLE?
         self.auto_range = 100
         self.move_speed = 3
 
-    def event_loop(self, events) -> None:
+        self.camera_offset = pygame.math.Vector2()
+
+
+    def event_loop(self, events, camera_offset) -> None:
         """
         Track input.
         """
         for event in events:
             if event.type == pygame.MOUSEBUTTONDOWN and event.button == RIGHT_CLICK:
-                self.mouse_clicks[event.pos] = self.linger_time
-                self.target = event.pos
+                map_pos = (event.pos[0] + camera_offset.x, event.pos[1] + camera_offset.y)
+                self.mouse_clicks[map_pos] = self.linger_time
+                self.target = map_pos
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_a:
                     self.input["a"] = True
@@ -55,27 +65,36 @@ class Champion(GameObject):
             self.input["a"] = True
 
 
-    def update(self) -> None:
+    def update(self, camera_offset) -> None:
         """
         Update.
         """
+        # Update camera offset
+        self.camera_offset = camera_offset
+
         # Update mouse clicks
         for click_pos, time in list(self.mouse_clicks.items()):
             self.mouse_clicks[click_pos] -= 1
             if self.mouse_clicks[click_pos] == 0:
                 del self.mouse_clicks[click_pos]
 
+        # Update cooldowns
+        for cd in self.cds:
+            if self.cds[cd] > 0:
+                self.cds[cd] -= 1
+
         # Call abilities
-        if self.input["q"]:
+        if self.input["q"] and self.cds["q"] == 0:
             self.q()
-        if self.input["w"]:
+        if self.input["w"] and self.cds["w"] == 0:
             self.w()
-        if self.input["e"]:
+        if self.input["e"] and self.cds["e"] == 0:
             self.e()
+        if self.input["d"] and self.cds["d"] == 0:
+            self.d()
         if self.input["s"]:
             self.s()
-        if self.input["d"]:
-            self.d()
+
             
         # Move toward target click
         distance = math.sqrt((self.target[0] - self.rect.centerx)**2 + (self.target[1] - self.rect.centery)**2)
@@ -109,18 +128,21 @@ class Champion(GameObject):
         """
         Draw auto range.
         """
+        self.cds["q"] = Champion.Q_CD
         print("q")
 
     def w(self) -> None:
         """
         Use w ability.
         """
+        self.cds["w"] = Champion.W_CD
         print("w")
 
     def e(self) -> None:
         """
         Use e ability.
         """
+        self.cds["e"] = Champion.E_CD
         print("e")
 
     def a(self, screen) -> None:
@@ -139,14 +161,16 @@ class Champion(GameObject):
         """
         Flash.
         """
+        self.cds["d"] = Champion.D_CD
+
         # Get mouse position and direction towards flash
-        mouse_x, mouse_y = pygame.mouse.get_pos()
-        dx = mouse_x - self.rect.centerx
-        dy = mouse_y - self.rect.centery
+        mouse_pos = pygame.math.Vector2(pygame.mouse.get_pos()) + self.camera_offset
+        dx = mouse_pos.x - self.rect.centerx
+        dy = mouse_pos.y - self.rect.centery
         distance = math.sqrt(dx ** 2 + dy ** 2)
         flash_unit_vector = pygame.math.Vector2(dx / distance, dy / distance)
         if distance < FLASH_DIST:
-            self.rect.center = (mouse_x, mouse_y)
+            self.rect.center = (mouse_pos.x, mouse_pos.y)
         else:
             self.rect.x += flash_unit_vector.x * FLASH_DIST
             self.rect.y += flash_unit_vector.y * FLASH_DIST
