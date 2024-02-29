@@ -1,4 +1,11 @@
 """
+Game values
+"""
+HEIGHT = 720
+WIDTH = 1280
+FPS = 60
+
+"""
 Colors used throughout the game.
 """
 

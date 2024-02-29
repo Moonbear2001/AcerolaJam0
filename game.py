@@ -1,6 +1,7 @@
 import pygame
 import time
 
+from constants import *
 from game_object import GameObject
 from champion import Champion
 
@@ -13,9 +14,6 @@ class Game:
     """
 
     name = "tbd"
-    width = 1280
-    height = 720
-    fps = 60
 
     def __init__(self) -> None:
         """
@@ -25,7 +23,7 @@ class Game:
         self.run = True
         self.delta_time = 0.0
         self.prev_time = 0.0
-        self.screen = pygame.display.set_mode((Game.width, Game.height))
+        self.screen = pygame.display.set_mode((WIDTH, HEIGHT))
 
         # Block irrelevant events
         # pygame.event.set_blocked()
@@ -33,6 +31,9 @@ class Game:
 
         # Grab input
         pygame.event.set_grab(False)
+
+        # Key repeat
+        pygame.key.set_repeat(1000)
 
         self.champions = pygame.sprite.Group()
         self.champions.add(Champion((255, 255, 255), 100, 100))
@@ -74,7 +75,7 @@ class Game:
             pygame.display.flip()
 
             # --- Limit frame rate --- #
-            clock.tick(Game.fps)
+            clock.tick(FPS)
 
         self.quit_game()
 
@@ -92,22 +93,23 @@ class Game:
         """
         Handle global events and propogate events.
         """
-        for event in pygame.event.get():
-            
+        events = pygame.event.get()
+        for event in events:
             # Quit game
             if event.type == pygame.QUIT:
                 self.quit_game()
 
         for champion in self.champions:
-            champion.event_loop()
+            champion.event_loop(events)
 
 
     def update(self) -> None:
         """
         Logic per frame.
         """
-        for champion in self.champions:
-            champion.update()
+        # for champion in self.champions:
+        #     champion.update()
+        self.champions.update()
 
 
     def draw(self) -> None:
@@ -117,6 +119,8 @@ class Game:
         self.screen.fill(pygame.Color(255, 255, 255))
         for champion in self.champions:
             champion.draw(self.screen)
+        # self.champions.draw(self.screen)
+
 
     def quit_game(self) -> None:
         """
