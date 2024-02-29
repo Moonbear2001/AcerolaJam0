@@ -30,7 +30,7 @@ class Game:
         # pygame.event.set_allowed()
 
         # Grab input
-        pygame.event.set_grab(False)
+        pygame.event.set_grab(True)
 
         # Key repeat
         pygame.key.set_repeat(1000)
@@ -96,7 +96,7 @@ class Game:
         events = pygame.event.get()
         for event in events:
             # Quit game
-            if event.type == pygame.QUIT:
+            if event.type == pygame.QUIT or (event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE):
                 self.quit_game()
 
         for champion in self.champions:
