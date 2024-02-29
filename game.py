@@ -1,6 +1,9 @@
 import pygame
 import time
 
+from game_object import GameObject
+from champion import Champion
+
 
 class Game:
     """
@@ -9,6 +12,7 @@ class Game:
     - delta time
     """
 
+    name = "tbd"
     width = 1280
     height = 720
     fps = 60
@@ -23,12 +27,29 @@ class Game:
         self.prev_time = 0.0
         self.screen = pygame.display.set_mode((Game.width, Game.height))
 
+        # Block irrelevant events
+        # pygame.event.set_blocked()
+        # pygame.event.set_allowed()
+
+        # Grab input
+        pygame.event.set_grab(False)
+
+        self.champions = pygame.sprite.Group()
+        self.champions.add(Champion((255, 255, 255), 100, 100))
+
+    def print_startup_info(self) -> None:
+        """
+        Prints some info on startup.
+        """
+        # print(f"Blocked events: {pygame.event.get_blocked(pygame.QUIT)}")
+        print(f"Inputs are grabbed for this game? {pygame.event.get_grab()}")
 
     def start(self) -> None:
         """
-        On startup.
+        On startup. Calls the game loop.
         """
-        pass
+        self.print_startup_info()
+        self.game_loop()
 
     def game_loop(self) -> None:
         """
@@ -50,6 +71,7 @@ class Game:
 
             # --- Drawing to screen --- #
             self.draw()
+            pygame.display.flip()
 
             # --- Limit frame rate --- #
             clock.tick(Game.fps)
@@ -68,28 +90,35 @@ class Game:
     
     def event_loop(self) -> None:
         """
-        Handle and then propogate events.
+        Handle global events and propogate events.
         """
         for event in pygame.event.get():
             
             # Quit game
             if event.type == pygame.QUIT:
-                print("quit")
+                self.quit_game()
+
+        for champion in self.champions:
+            champion.event_loop()
+
 
     def update(self) -> None:
         """
         Logic per frame.
         """
-        pass
+        for champion in self.champions:
+            champion.update()
 
 
     def draw(self) -> None:
         """
         Draw game objects to the screen.
         """
-        self.screen.fill((255, 255, 255))
+        self.screen.fill(pygame.Color(255, 255, 255))
+        for champion in self.champions:
+            champion.draw(self.screen)
 
-    def quit_game() -> None:
+    def quit_game(self) -> None:
         """
         Quit the game, cleanup.
         """
