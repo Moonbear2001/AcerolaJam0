@@ -13,7 +13,7 @@ class Game:
     - delta time
     """
 
-    name = "tbd"
+    name = "Aberrant Evolution"
 
     def __init__(self) -> None:
         """
@@ -24,7 +24,7 @@ class Game:
         self.delta_time = 0.0
         self.prev_time = 0.0
         self.screen = pygame.display.set_mode((WIDTH, HEIGHT))
-        pygame.display.set_caption("Acerola Jam 0")
+        pygame.display.set_caption(Game.name)
 
         # Block irrelevant events
         # pygame.event.set_blocked()
@@ -34,13 +34,29 @@ class Game:
         pygame.event.set_grab(True)
 
         # Key repeat
-        pygame.key.set_repeat(1000)
+        # pygame.key.set_repeat(1000)
 
+        # Special cursor
+        # pygame.mouse.set_cursor(*pygame.cursors.arrow)
+        # pygame.mouse.set_cursor(*pygame.cursors.diamond)
+        # pygame.mouse.set_cursor(*pygame.cursors.broken_x)
+        # pygame.mouse.set_cursor(*pygame.cursors.tri_left)
+        # pygame.mouse.set_cursor(*pygame.cursors.tri_right)
+        cursor = pygame.cursors.compile(pygame.cursors.textmarker_strings)
+        pygame.mouse.set_cursor((8, 16), (0, 0), *cursor)
+        
+        # Not working too well
+        # pygame.cursors.thickarrow_strings
+        # pygame.cursors.sizer_x_strings
+        # pygame.cursors.sizer_y_strings
+        # pygame.cursors.sizer_xy_strings
+        # pygame.cursors.textmarker_strings
+        
+        self.map = pygame.Surface((MAP_WIDTH, MAP_HEIGHT))
         self.champions = pygame.sprite.Group()
-        self.champions.add(Champion((255, 255, 255), 100, 100))
+        self.champions.add(Champion(self.map, (255, 255, 255), 100, 100))
 
         self.camera_offset = pygame.math.Vector2(0, 0)
-        self.map = pygame.Surface((MAP_WIDTH, MAP_HEIGHT))
         self.camera_speed = 5
 
     def print_startup_info(self) -> None:
@@ -140,7 +156,7 @@ class Game:
         """
         self.map.fill(pygame.Color(255, 255, 255))
         for champion in self.champions:
-            champion.draw(self.map)
+            champion.draw()
         # self.champions.draw(self.screen)
             
         # Draw enemies

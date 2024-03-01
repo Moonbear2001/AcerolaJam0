@@ -4,6 +4,8 @@ import math
 from game_object import GameObject
 from constants import *
 from my_math import *
+from ability import Ability
+
 
 
 class Champion(GameObject):
@@ -16,10 +18,12 @@ class Champion(GameObject):
     E_CD = 5 * FPS
     D_CD = 5 * FPS
 
-    def __init__(self, color, width, height):
+    kit_radius = 20
+
+    def __init__(self, screen, color, width, height):
         """
         """
-        super().__init__()
+        super().__init__(screen)
         self.image = pygame.Surface([width, height])
         self.image.fill(color)
         self.rect = self.image.get_rect()
@@ -36,6 +40,10 @@ class Champion(GameObject):
         self.move_speed = 3
 
         self.camera_offset = pygame.math.Vector2()
+
+        self.abilities = pygame.sprite.Group()
+        self.abilities.add(Ability(self.rect.center, Champion.kit_radius, 2, "square", RED))
+        self.abilities.add(Ability(self.rect.center, Champion.kit_radius, 1, "circle", GREEN))
 
 
     def event_loop(self, events, camera_offset) -> None:
@@ -83,6 +91,35 @@ class Champion(GameObject):
             if self.cds[cd] > 0:
                 self.cds[cd] -= 1
 
+        # Move toward target click
+        distance = math.sqrt((self.target[0] - self.rect.centerx)**2 + (self.target[1] - self.rect.centery)**2)
+        if distance >= self.move_speed:
+            direction_x = (self.target[0] - self.rect.centerx) / distance
+            direction_y = (self.target[1] - self.rect.centery) / distance
+            self.rect.x += direction_x * self.move_speed
+            self.rect.y += direction_y * self.move_speed
+        else:
+            self.rect.center = self.target
+
+        # Update abilities
+        self.abilities.update(self.rect.center)
+
+    
+    def draw(self) -> None:
+        """
+        Draw self.
+        """
+        for click_pos, time in self.mouse_clicks.items():
+            pygame.draw.circle(self.screen, NEON, click_pos, int(10 * (time/self.linger_time)))
+
+        pygame.draw.circle(self.screen, BLACK, self.rect.center, 10)
+        pygame.draw.circle(self.screen, LIGHT_GRAY, self.rect.center, Champion.kit_radius, 2)
+
+
+        # Draw auto range
+        if self.input["a"]:
+            self.a()
+
         # Call abilities
         if self.input["q"] and self.cds["q"] == 0:
             self.q()
@@ -95,30 +132,8 @@ class Champion(GameObject):
         if self.input["s"]:
             self.s()
 
-            
-        # Move toward target click
-        distance = math.sqrt((self.target[0] - self.rect.centerx)**2 + (self.target[1] - self.rect.centery)**2)
-        if distance >= self.move_speed:
-            direction_x = (self.target[0] - self.rect.centerx) / distance
-            direction_y = (self.target[1] - self.rect.centery) / distance
-            self.rect.x += direction_x * self.move_speed
-            self.rect.y += direction_y * self.move_speed
-        else:
-            self.rect.center = self.target
-
-    
-    def draw(self, screen) -> None:
-        """
-        Draw mouse clicks.
-        """
-        for click_pos, time in self.mouse_clicks.items():
-            pygame.draw.circle(screen, BLUE, click_pos, int(10 * (time/self.linger_time)))
-
-        pygame.draw.circle(screen, BLUE, self.rect.center, 10)
-
-        # Draw auto range
-        if self.input["a"]:
-            self.a(screen)
+        # Draw abilities
+        self.abilities.draw(self.screen)
 
         # RESET
         self.input = {"a": False, "s": False, "d": False, "q": False, "w": False, "e": False}
@@ -145,11 +160,11 @@ class Champion(GameObject):
         self.cds["e"] = Champion.E_CD
         print("e")
 
-    def a(self, screen) -> None:
+    def a(self) -> None:
         """
         Draw auto range.
         """
-        pygame.draw.circle(screen, BLUE, self.rect.center, self.auto_range, 2)
+        pygame.draw.circle(self.screen, BLUE, self.rect.center, self.auto_range, 2)
 
     def s(self) -> None:
         """

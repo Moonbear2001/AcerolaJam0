@@ -6,8 +6,9 @@ class GameObject(pygame.sprite.Sprite):
     purpose game object.
     """
 
-    def __init__(self) -> None:
+    def __init__(self, screen) -> None:
         super().__init__()
+        self.screen = screen
 
     def event_loop(events) -> None:
         pass
