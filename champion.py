@@ -19,6 +19,7 @@ class Champion(GameObject):
     D_CD = 5 * FPS
 
     kit_radius = 20
+    aa_cd = 3
 
     def __init__(self, screen, color, width, height):
         """
@@ -32,7 +33,7 @@ class Champion(GameObject):
         self.linger_time = 10
         
         self.input = {"a": False, "s": False, "d": False, "q": False, "w": False, "e": False}
-        self.cds = {"d": 0.0, "q": 0.0, "w": 0.0, "e": 0.0}
+        self.cds = {"aa": 0.0 , "d": 0.0, "q": 0.0, "w": 0.0, "e": 0.0}
         self.target = (WIDTH // 2, HEIGHT // 2)
 
         # TODO: VARIABLE?

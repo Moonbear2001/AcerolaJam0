@@ -1,9 +1,13 @@
 import pygame
 import time
+import os
 
 from constants import *
 from game_object import GameObject
 from champion import Champion
+
+from states.title import Title
+from states.pause import Pause
 
 
 class Game:
@@ -14,6 +18,7 @@ class Game:
     """
 
     name = "Aberrant Evolution"
+    FONT_DIR = "assets/fonts"
 
     def __init__(self) -> None:
         """
@@ -26,6 +31,21 @@ class Game:
         self.screen = pygame.display.set_mode((WIDTH, HEIGHT))
         pygame.display.set_caption(Game.name)
 
+        self.pygame_settings()
+
+        self.state_stack = []
+        self.current_state = None
+
+        self.fonts = {}
+
+        # Load other stuff
+        self.load_assets()
+        self.load_states()
+
+    def pygame_settings(self):
+        """
+        Pygame specific preferences.
+        """
         # Block irrelevant events
         # pygame.event.set_blocked()
         # pygame.event.set_allowed()
@@ -42,8 +62,8 @@ class Game:
         # pygame.mouse.set_cursor(*pygame.cursors.broken_x)
         # pygame.mouse.set_cursor(*pygame.cursors.tri_left)
         # pygame.mouse.set_cursor(*pygame.cursors.tri_right)
-        cursor = pygame.cursors.compile(pygame.cursors.textmarker_strings)
-        pygame.mouse.set_cursor((8, 16), (0, 0), *cursor)
+        # cursor = pygame.cursors.compile(pygame.cursors.textmarker_strings)
+        # pygame.mouse.set_cursor((8, 16), (0, 0), *cursor)
         
         # Not working too well
         # pygame.cursors.thickarrow_strings
@@ -51,13 +71,26 @@ class Game:
         # pygame.cursors.sizer_y_strings
         # pygame.cursors.sizer_xy_strings
         # pygame.cursors.textmarker_strings
-        
-        self.map = pygame.Surface((MAP_WIDTH, MAP_HEIGHT))
-        self.champions = pygame.sprite.Group()
-        self.champions.add(Champion(self.map, (255, 255, 255), 100, 100))
 
-        self.camera_offset = pygame.math.Vector2(0, 0)
-        self.camera_speed = 5
+    def load_assets(self):
+        """
+        Load in game assets.
+        """
+        # Fonts
+        for file in os.listdir(Game.FONT_DIR):
+            font_path = os.path.join(Game.FONT_DIR, file)
+            font_name = os.path.splitext(file)[0]
+            self.fonts[font_name] = pygame.font.Font(font_path, 36)
+
+        # Sounds, spritesheets, etc.
+
+    def load_states(self):
+        """
+        Load in starting game state.
+        """
+        title_state = Title(self, Game.name)
+        self.current_state = title_state
+        self.state_stack.append(title_state)
 
     def print_startup_info(self) -> None:
         """
@@ -65,6 +98,12 @@ class Game:
         """
         # print(f"Blocked events: {pygame.event.get_blocked(pygame.QUIT)}")
         print(f"Inputs are grabbed for this game? {pygame.event.get_grab()}")
+        print(f"Default font: {pygame.font.get_default_font()}")
+        print(f"Pygame display backend: {pygame.display.get_driver()}")
+        print(pygame.display.Info())
+        # print(f"Available fonts: ")
+        # for font in pygame.font.get_fonts():
+        #     print(font)
 
     def start(self) -> None:
         """
@@ -82,6 +121,9 @@ class Game:
 
         while self.run:
 
+            # --- Change state? --- #
+            self.current_state = self.state_stack[-1]
+
             # --- Delta time logic --- #
             self.get_delta_time()
 
@@ -93,7 +135,8 @@ class Game:
 
             # --- Drawing to screen --- #
             self.draw()
-            pygame.display.flip()
+            if not isinstance(self.current_state, Pause):
+                pygame.display.flip()
 
             # --- Limit frame rate --- #
             clock.tick(FPS)
@@ -116,67 +159,35 @@ class Game:
         """
         events = pygame.event.get()
         for event in events:
-
-            # Quit game
+            # Esc always quits game
             if event.type == pygame.QUIT or (event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE):
-                self.quit_game()
-            
-        for champion in self.champions:
-            champion.event_loop(events, self.camera_offset)
-
+                self.run = False
+                return
+        
+        self.current_state.event_loop(events)
 
     def update(self) -> None:
         """
-        Logic per frame.
+        Handle global and state logic per frame.
         """
-        # Move the camera
-        mouse_x, mouse_y = pygame.mouse.get_pos()
-        if mouse_x == WIDTH - 1:
-            self.camera_offset.x += self.camera_speed
-        elif  mouse_x == 0:
-            self.camera_offset.x -= self.camera_speed
-        if mouse_y == HEIGHT - 1:
-            self.camera_offset.y += self.camera_speed
-        elif mouse_y == 0:
-            self.camera_offset.y -= self.camera_speed
-
-        # Ensure camera does not go out of bounds
-        self.camera_offset.x = max(0, min(self.camera_offset.x, MAP_WIDTH - WIDTH))
-        self.camera_offset.y = max(0, min(self.camera_offset.y, MAP_HEIGHT - HEIGHT))
-
-        # Update champions
-        # for champion in self.champions:
-        #     champion.update()
-        self.champions.update(self.camera_offset)
-
+        self.current_state.update()
 
     def draw(self) -> None:
         """
-        Draw game objects to the screen.
+        Draw global and state items per frame.
         """
-        self.map.fill(pygame.Color(255, 255, 255))
-        for champion in self.champions:
-            champion.draw()
-        # self.champions.draw(self.screen)
-            
-        # Draw enemies
-        pygame.draw.rect(self.map, RED, (100, 100, 50, 50))
-        pygame.draw.rect(self.map, RED, (1000, 100, 50, 50))
-        pygame.draw.rect(self.map, RED, (100, 1000, 50, 50))
-        pygame.draw.rect(self.map, RED, (500, 500, 50, 50))
-        pygame.draw.rect(self.map, RED, (2000, 1000, 50, 50))
-        pygame.draw.rect(self.map, RED, (2100, 1300, 50, 50))
-
-        self.screen.blit(self.map, (0, 0), pygame.Rect(self.camera_offset, (WIDTH, HEIGHT)))
-
+        self.current_state.draw()
+        self.screen.blit(self.current_state.screen, (0, 0))
 
     def quit_game(self) -> None:
         """
-        Quit the game, cleanup.
+        Cleanup and quit the game.
         """
         pygame.quit()
         exit()
 
-            
-
+# Main
+if __name__ == "__main__":
+    game = Game()
+    game.start()
 

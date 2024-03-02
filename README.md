@@ -10,3 +10,23 @@ Enemies evolve as well
 
 farming minions gives exp toward next abberation
 
+
+
+PLANS
+
+Sound
+- blue, red, green ability sounds
+- auto sound
+
+Enemies
+- attack schemes
+    - charge...dash!
+    - 
+- minions
+    - passively go for tower
+
+TODO
+- add rotation to orbiting abilities
+- reload system? aphelios guns? special bullets
+- state system?
+- change cursor on auto
