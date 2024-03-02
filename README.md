@@ -30,3 +30,8 @@ TODO
 - reload system? aphelios guns? special bullets
 - change cursor on auto
 - move reset's from end of draw functions
+- champs should have option to follow a target 
+    - what if target dies and ref is lost
+
+Works cited
+https://www.fontspace.com/kg-holocene-font-f60752

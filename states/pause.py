@@ -35,3 +35,5 @@ class Pause(State):
         Draw the frame.
         """
         pygame.draw.rect(self.screen, BLACK, (0, 0, 100, 100))
+        
+    
