@@ -28,5 +28,5 @@ Enemies
 TODO
 - add rotation to orbiting abilities
 - reload system? aphelios guns? special bullets
-- state system?
 - change cursor on auto
+- move reset's from end of draw functions

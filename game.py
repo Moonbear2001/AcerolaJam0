@@ -38,7 +38,6 @@ class Game:
 
         self.fonts = {}
 
-        # Load other stuff
         self.load_assets()
         self.load_states()
 

@@ -20,7 +20,7 @@ class Title(State):
 
         # Start game button
         sbsize = game.fonts["KgHoloceneRegular"].size("Start Game")
-        start_button = Button(self.screen, 0, 0, sbsize[0], sbsize[1], "Start Game", font=game.fonts["KgHoloceneRegular"], function=self.enter_state, args=Gameplay(game))
+        start_button = Button(self, self.screen, 0, 0, sbsize[0], sbsize[1], "Start Game", font=game.fonts["KgHoloceneRegular"], function=self.enter_state, args=Gameplay(game))
         start_button.rect.center = (WIDTH // 2, HEIGHT // 2)
         self.game_objects.add(start_button)
         

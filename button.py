@@ -10,11 +10,11 @@ class Button(GameObject):
     correctly in the function that is called on-click.
     """
 
-    def __init__(self, screen, x, y, width, height, text, text_color=BLACK, font=None, function=None, args=None) -> None:
+    def __init__(self, state, screen, x, y, width, height, text, text_color=BLACK, font=None, function=None, args=None) -> None:
         """
         Create a new button.
         """
-        super().__init__(screen)
+        super().__init__(state, screen)
         self.image = pygame.Surface((width, height))
         self.image.fill(WHITE)
         self.rect = self.image.get_rect(topleft=(x, y))

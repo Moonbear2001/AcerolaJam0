@@ -17,24 +17,27 @@ class Champion(GameObject):
     W_CD = 5 * FPS
     E_CD = 5 * FPS
     D_CD = 5 * FPS
+    AA_CD = 1 * FPS
 
     kit_radius = 20
     aa_cd = 3
 
-    def __init__(self, screen, color, width, height):
+    def __init__(self, state, screen, color, width, height):
         """
+        Make a new Champion.
         """
-        super().__init__(screen)
+        super().__init__(state, screen)
         self.image = pygame.Surface([width, height])
         self.image.fill(color)
         self.rect = self.image.get_rect()
 
-        self.mouse_clicks = {}
+        self.move_clicks = {}
+        self.attack_clicks = {}
         self.linger_time = 10
         
-        self.input = {"a": False, "s": False, "d": False, "q": False, "w": False, "e": False}
+        self.input = {"aa": False, "a": False, "s": False, "d": False, "q": False, "w": False, "e": False}
         self.cds = {"aa": 0.0 , "d": 0.0, "q": 0.0, "w": 0.0, "e": 0.0}
-        self.target = (WIDTH // 2, HEIGHT // 2)
+        self.target_pos = (WIDTH // 2, HEIGHT // 2)
 
         # TODO: VARIABLE?
         self.auto_range = 100
@@ -46,19 +49,36 @@ class Champion(GameObject):
         self.abilities.add(Ability(self.rect.center, Champion.kit_radius, 2, "square", RED))
         self.abilities.add(Ability(self.rect.center, Champion.kit_radius, 1, "circle", GREEN))
 
+        self.wants_to_aa = False
+        self.target = None
+
 
     def event_loop(self, events, camera_offset) -> None:
         """
         Track input.
         """
+        if pygame.key.get_pressed()[pygame.K_a]:
+            self.input["a"] = True
+
         for event in events:
-            if event.type == pygame.MOUSEBUTTONDOWN and event.button == RIGHT_CLICK:
-                map_pos = (event.pos[0] + camera_offset.x, event.pos[1] + camera_offset.y)
-                self.mouse_clicks[map_pos] = self.linger_time
-                self.target = map_pos
+            if event.type == pygame.MOUSEBUTTONDOWN:
+
+                # Movement clicks
+                if event.button == RIGHT_CLICK:
+                    self.wants_to_aa = False
+                    map_pos = (event.pos[0] + camera_offset.x, event.pos[1] + camera_offset.y)
+                    self.move_clicks[map_pos] = self.linger_time
+                    self.target_pos = map_pos
+                
+                # Auto attacks
+                elif event.button == LEFT_CLICK:
+                    self.input["aa"] = True
+                    map_pos = (event.pos[0] + camera_offset.x, event.pos[1] + camera_offset.y)
+                    self.attack_clicks[map_pos] = self.linger_time
+
             if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_a:
-                    self.input["a"] = True
+                # if event.key == pygame.K_a:
+                #     self.input["a"] = True
                 if event.key == pygame.K_s:
                     self.input["s"] = True
                 if event.key == pygame.K_d:
@@ -69,9 +89,6 @@ class Champion(GameObject):
                     self.input["w"] = True
                 if event.key == pygame.K_e:
                     self.input["e"] = True
-        
-        if pygame.key.get_pressed()[pygame.K_a]:
-            self.input["a"] = True
 
 
     def update(self, camera_offset) -> None:
@@ -82,10 +99,14 @@ class Champion(GameObject):
         self.camera_offset = camera_offset
 
         # Update mouse clicks
-        for click_pos, time in list(self.mouse_clicks.items()):
-            self.mouse_clicks[click_pos] -= 1
-            if self.mouse_clicks[click_pos] == 0:
-                del self.mouse_clicks[click_pos]
+        for click_pos, time in list(self.move_clicks.items()):
+            self.move_clicks[click_pos] -= 1
+            if self.move_clicks[click_pos] == 0:
+                del self.move_clicks[click_pos]
+        for click_pos, time in list(self.attack_clicks.items()):
+            self.attack_clicks[click_pos] -= 1
+            if self.attack_clicks[click_pos] == 0:
+                del self.attack_clicks[click_pos]
 
         # Update cooldowns
         for cd in self.cds:
@@ -93,26 +114,23 @@ class Champion(GameObject):
                 self.cds[cd] -= 1
 
         # Move toward target click
-        distance = math.sqrt((self.target[0] - self.rect.centerx)**2 + (self.target[1] - self.rect.centery)**2)
-        if distance >= self.move_speed:
-            direction_x = (self.target[0] - self.rect.centerx) / distance
-            direction_y = (self.target[1] - self.rect.centery) / distance
-            self.rect.x += direction_x * self.move_speed
-            self.rect.y += direction_y * self.move_speed
-        else:
-            self.rect.center = self.target
+        self.move_towards_target()
 
         # Update abilities
-        self.abilities.update(self.rect.center)
+        self.abilities.update(self.rect.center)        
 
     
     def draw(self) -> None:
         """
         Draw self.
         """
-        for click_pos, time in self.mouse_clicks.items():
+        # Draw clicks
+        for click_pos, time in self.move_clicks.items():
             pygame.draw.circle(self.screen, NEON, click_pos, int(10 * (time/self.linger_time)))
+        for click_pos, time in self.attack_clicks.items():
+            pygame.draw.circle(self.screen, RED, click_pos, int(10 * (time/self.linger_time)))
 
+        # Draw character body
         pygame.draw.circle(self.screen, BLACK, self.rect.center, 10)
         pygame.draw.circle(self.screen, LIGHT_GRAY, self.rect.center, Champion.kit_radius, 2)
 
@@ -120,6 +138,10 @@ class Champion(GameObject):
         # Draw auto range
         if self.input["a"]:
             self.a()
+
+        # Auto attack something
+        if self.input["aa"] and self.cds["aa"] == 0:
+            self.aa()
 
         # Call abilities
         if self.input["q"] and self.cds["q"] == 0:
@@ -137,9 +159,31 @@ class Champion(GameObject):
         self.abilities.draw(self.screen)
 
         # RESET
-        self.input = {"a": False, "s": False, "d": False, "q": False, "w": False, "e": False}
+        self.input = {"aa": False, "a": False, "s": False, "d": False, "q": False, "w": False, "e": False}
 
-    
+    def aa(self) -> None:
+        """
+        Auto attack a target.
+        """
+        print("AA")
+        # Nothing targeted
+        self.target = self.state.get_targeted()
+        if self.target is None:
+            print("nothing targeted")
+            return
+        
+        # Targeted but not in range
+        elif not self.is_in_range(self.target):
+            print("targeted not in range")
+            self.wants_to_aa = True
+            self.target_pos = self.target.rect.center
+
+        # Targeted and in range
+        else:
+            self.cds["aa"] == Champion.AA_CD
+            print("aa")
+
+
     def q(self) -> None:
         """
         Draw auto range.
@@ -171,7 +215,7 @@ class Champion(GameObject):
         """
         Stop movement.
         """
-        self.target = self.rect.center
+        self.target_pos = self.rect.center
 
     def d(self) -> None:
         """
@@ -192,9 +236,42 @@ class Champion(GameObject):
             self.rect.y += flash_unit_vector.y * FLASH_DIST
 
         # Reset movement if flash is away from previously desired direction
-        target_vector = vector_between_points(self.rect.center, self.target)
+        target_vector = vector_between_points(self.rect.center, self.target_pos)
         if angle_between(target_vector, (flash_unit_vector.x, flash_unit_vector.y)) > 90:
-            self.target = self.rect.center
+            self.target_pos = self.rect.center
+
+    def is_in_range(self, minion) -> bool:
+        """
+        Check if a game objects center coordinate is in this champions auto attack range.
+        """
+        # Calculate the distance between the center points of the champion and minion
+        distance = math.sqrt((self.rect.centerx - minion.rect.centerx)**2 + (self.rect.centery - minion.rect.centery)**2 )
+
+        # Check if the distance is less than or equal to the champion's attack range
+        return distance <= self.auto_range
+    
+    def move_towards_target(self):
+        """
+        Move the champion toward the desired pos.
+        """
+
+        # TESTING
+        if self.wants_to_aa:
+            if self.is_in_range(self.target):
+                print('in range! stop')
+                self.target_pos = self.rect.center
+                self.wants_to_aa = False
+
+
+        distance = math.sqrt((self.target_pos[0] - self.rect.centerx)**2 + (self.target_pos[1] - self.rect.centery)**2)
+        if distance >= self.move_speed:
+            direction_x = (self.target_pos[0] - self.rect.centerx) / distance
+            direction_y = (self.target_pos[1] - self.rect.centery) / distance
+            self.rect.x += direction_x * self.move_speed
+            self.rect.y += direction_y * self.move_speed
+        else:
+            self.rect.center = self.target_pos
+
 
             
     

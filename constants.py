@@ -16,6 +16,7 @@ GREEN = (0, 255, 0)
 BLUE = (0, 0, 255)
 NEON = (58, 235, 52)
 LIGHT_GRAY = (220, 220, 220)
+ORANGE = (168, 98, 50)
 
 """
 Gameplay values

@@ -4,6 +4,7 @@ from .state import State
 from .pause import Pause
 from constants import *
 from champion import Champion
+from minion import Minion
 
 class Gameplay(State):
     """
@@ -17,10 +18,14 @@ class Gameplay(State):
         super().__init__(game)
 
         self.map = pygame.Surface((MAP_WIDTH, MAP_HEIGHT))
-        self.game_objects.add(Champion(self.map, (255, 255, 255), 100, 100))
 
         self.camera_offset = pygame.math.Vector2(0, 0)
         self.camera_speed = 5
+
+        self.game_objects.add(Minion(self, self.map, (0, 0, 0)))
+        self.game_objects.add(Champion(self, self.map, (255, 255, 255), 100, 100))
+
+        self.highlighted = set()
 
 
     def event_loop(self, events):
@@ -81,3 +86,19 @@ class Gameplay(State):
 
         self.screen.blit(self.map, (0, 0), pygame.Rect(self.camera_offset, (WIDTH, HEIGHT)))
         # super().draw()
+
+        # RESET
+        self.highlighted.clear()
+
+    def get_targeted(self):
+        """
+        Return the game object that is under the player's cursor and None is nothing 
+        is highlighted.
+        """
+        return self.highlighted.pop() if self.highlighted else None
+    
+    def add_targeted(self, target):
+        """
+        Add a highlighted/targeted object.
+        """
+        self.highlighted.add(target)
