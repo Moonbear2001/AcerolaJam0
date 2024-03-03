@@ -18,7 +18,10 @@ class Game:
     """
 
     name = "Aberrant Evolution"
+
     FONT_DIR = "assets/fonts"
+    SFX_DIR = "assets/audio/sfx"
+    MUSIC_DIR = "assets/audio/music"
 
     def __init__(self) -> None:
         """
@@ -36,9 +39,12 @@ class Game:
         self.state_stack = []
         self.current_state = None
 
+        # Assets
         self.fonts = {}
-
+        self.sfx = {}
+        self.music = {}
         self.load_assets()
+
         self.load_states()
 
     def pygame_settings(self):
@@ -71,15 +77,32 @@ class Game:
         # pygame.cursors.sizer_xy_strings
         # pygame.cursors.textmarker_strings
 
+        # Reserve certain mixer channels
+        # pygame.mixer.set_reserved()
+
     def load_assets(self):
         """
         Load in game assets.
         """
-        # Fonts
+        # Fonts   
         for file in os.listdir(Game.FONT_DIR):
             font_path = os.path.join(Game.FONT_DIR, file)
             font_name = os.path.splitext(file)[0]
             self.fonts[font_name] = pygame.font.Font(font_path, 36)
+
+        # Sounds
+        for file in os.listdir(Game.SFX_DIR):
+            sound_path = os.path.join(Game.SFX_DIR, file)
+            sound_name = os.path.splitext(file)[0]
+            self.sfx[sound_name] = pygame.mixer.Sound(sound_path)
+
+        print(self.sfx)
+            
+        # Music
+        for file in os.listdir(Game.MUSIC_DIR):
+            music_path = os.path.join(Game.MUSIC_DIR, file)
+            music_name = os.path.splitext(file)[0]
+            self.sfx[music_name] = pygame.mixer.music(music_path)
 
         # Sounds, spritesheets, etc.
 
@@ -100,6 +123,7 @@ class Game:
         print(f"Default font: {pygame.font.get_default_font()}")
         print(f"Pygame display backend: {pygame.display.get_driver()}")
         print(pygame.display.Info())
+        print(f"Number of mixer channels: {pygame.mixer.get_num_channels()}")
         # print(f"Available fonts: ")
         # for font in pygame.font.get_fonts():
         #     print(font)
