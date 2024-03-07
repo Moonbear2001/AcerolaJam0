@@ -17,7 +17,7 @@ class Champion(GameObject):
     W_CD = 5 * FPS
     E_CD = 5 * FPS
     D_CD = 5 * FPS
-    AA_CD = 1 * FPS
+    AA_CD = 5 * FPS
 
     kit_radius = 20
     aa_cd = 3
@@ -45,6 +45,7 @@ class Champion(GameObject):
 
         self.camera_offset = pygame.math.Vector2()
 
+        # Abilities
         self.abilities = pygame.sprite.Group()
         self.abilities.add(Ability(self.rect.center, Champion.kit_radius, 2, "square", RED))
         self.abilities.add(Ability(self.rect.center, Champion.kit_radius, 1, "circle", GREEN))
@@ -158,6 +159,10 @@ class Champion(GameObject):
         # Draw abilities
         self.abilities.draw(self.screen)
 
+        # Draw auto attack reload
+        if self.cds["aa"] > 0:
+            pygame.draw.arc(self.screen, ORANGE, self.rect, 0, 2 * PI * (self.cds["aa"] / Champion.AA_CD), width=5)
+
         # RESET
         self.input = {"aa": False, "a": False, "s": False, "d": False, "q": False, "w": False, "e": False}
 
@@ -165,7 +170,6 @@ class Champion(GameObject):
         """
         Auto attack a target.
         """
-        print("AA")
         # Nothing targeted
         self.target = self.state.get_targeted()
         if self.target is None:
@@ -178,10 +182,10 @@ class Champion(GameObject):
             self.wants_to_aa = True
             self.target_pos = self.target.rect.center
 
-        # Targeted and in range
+        # Targeted and in range, actually auto
         else:
-            self.cds["aa"] == Champion.AA_CD
-            print("aa")
+            self.cds["aa"] = Champion.AA_CD
+            print("actually auto")
 
 
     def q(self) -> None:

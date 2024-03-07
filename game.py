@@ -95,16 +95,15 @@ class Game:
             sound_path = os.path.join(Game.SFX_DIR, file)
             sound_name = os.path.splitext(file)[0]
             self.sfx[sound_name] = pygame.mixer.Sound(sound_path)
-
-        print(self.sfx)
             
         # Music
         for file in os.listdir(Game.MUSIC_DIR):
             music_path = os.path.join(Game.MUSIC_DIR, file)
             music_name = os.path.splitext(file)[0]
-            self.sfx[music_name] = pygame.mixer.music(music_path)
+            self.sfx[music_name] = pygame.mixer.music.load(music_path)
 
         # Sounds, spritesheets, etc.
+        
 
     def load_states(self):
         """
