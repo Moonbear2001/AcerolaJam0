@@ -6,8 +6,9 @@ from constants import *
 from game_object import GameObject
 from champion import Champion
 
-from states.title import Title
+from states.menu import Menu
 from states.pause import Pause
+from states.intro import Intro
 
 
 class Game:
@@ -109,10 +110,13 @@ class Game:
         """
         Load in starting game state.
         """
-        title_state = Title(self, Game.name)
-        self.current_state = title_state
-        self.state_stack.append(title_state)
-
+        # menu_state = Menu(self, Game.name)
+        # self.current_state = menu_state
+        # self.state_stack.append(menu_state)
+        intro_state = Intro(self)
+        self.current_state = intro_state
+        self.state_stack.append(intro_state)
+    
     def print_startup_info(self) -> None:
         """
         Prints some info on startup.

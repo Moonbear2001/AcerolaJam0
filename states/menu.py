@@ -6,14 +6,14 @@ from button import Button
 from constants import *
 
 
-class Title(State):
+class Menu(State):
     """
     A game state (menu, gameplay, etc.).
     """
     
     def __init__(self, game, title):
         """
-        Create a new Title state.
+        Create a new Menu state.
         """
         super().__init__(game)
         self.title = title

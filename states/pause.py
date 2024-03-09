@@ -11,7 +11,7 @@ class Pause(State):
     
     def __init__(self, game):
         """
-        Create a new Title state.
+        Create a new Pause state.
         """
         super().__init__(game)
 
